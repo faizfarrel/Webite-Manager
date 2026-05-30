@@ -1,0 +1,307 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap');
+
+  .slot-wrap { padding: 2rem 0; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+
+  .machine {
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-xl);
+    padding: 2rem;
+    background: var(--color-background-primary);
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .machine-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.5px;
+    margin: 0;
+  }
+
+  .balance-row {
+    display: flex; gap: 1.5rem; width: 100%;
+  }
+  .stat {
+    flex: 1;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 0.75rem 1rem;
+    text-align: center;
+  }
+  .stat-label { font-size: 11px; color: var(--color-text-tertiary); letter-spacing: 0.05em; text-transform: uppercase; margin: 0 0 2px; }
+  .stat-value { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; color: var(--color-text-primary); margin: 0; }
+
+  .reels {
+    display: flex; gap: 10px;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 1rem;
+    background: var(--color-background-secondary);
+    width: 100%; box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .reel {
+    flex: 1;
+    height: 90px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    transition: transform 0.08s;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .reel .symbol {
+    position: absolute;
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 44px;
+    transition: top 0.15s ease-in-out;
+  }
+
+  .win-line {
+    position: absolute;
+    top: 50%; left: 0; right: 0;
+    height: 1px;
+    background: var(--color-border-tertiary);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .bet-row {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+  }
+  .bet-row label { font-size: 13px; color: var(--color-text-secondary); white-space: nowrap; }
+  .bet-row input[type=range] { flex: 1; }
+  .bet-amount { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--color-text-primary); min-width: 40px; text-align: right; }
+
+  .spin-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .spin-btn:hover { background: var(--color-background-secondary); }
+  .spin-btn:active { transform: scale(0.98); }
+  .spin-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .message {
+    font-size: 14px;
+    font-family: 'DM Mono', monospace;
+    color: var(--color-text-secondary);
+    min-height: 20px;
+    text-align: center;
+    transition: color 0.3s;
+  }
+  .message.win { color: var(--color-text-success); }
+  .message.lose { color: var(--color-text-danger); }
+
+  .history {
+    width: 340px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .history-title { font-size: 12px; color: var(--color-text-tertiary); letter-spacing: 0.05em; text-transform: uppercase; margin: 0 0 4px; }
+  .history-item {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; font-family: 'DM Mono', monospace;
+    color: var(--color-text-secondary);
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+    padding: 4px 0;
+  }
+  .history-item .syms { letter-spacing: 2px; }
+  .history-item .result-pos { color: var(--color-text-success); }
+  .history-item .result-neg { color: var(--color-text-danger); }
+</style>
+
+<h2 class="sr-only">A minimal slot machine with balance tracking and spin history.</h2>
+
+<div class="slot-wrap">
+  <div class="machine">
+    <p class="machine-title">One-Armed Bandit</p>
+
+    <div class="balance-row">
+      <div class="stat">
+        <p class="stat-label">Balance</p>
+        <p class="stat-value" id="balance">Rp.100.000</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Spins</p>
+        <p class="stat-value" id="spins">0</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Net</p>
+        <p class="stat-value" id="net">$0</p>
+      </div>
+    </div>
+
+    <div class="reels">
+      <div class="reel" id="r0"><div class="symbol" id="s0">🍋</div></div>
+      <div class="reel" id="r1"><div class="symbol" id="s1">🍒</div></div>
+      <div class="reel" id="r2"><div class="symbol" id="s2">⭐</div></div>
+      <div class="win-line"></div>
+    </div>
+
+    <div class="bet-row">
+      <label>Bet</label>
+      <input type="range" id="bet-slider" min="1" max="20" step="1" value="5" />
+      <span class="bet-amount" id="bet-display">Rp.10.000</span>
+    </div>
+
+    <p class="message" id="msg">pull the lever to play</p>
+
+    <button class="spin-btn" id="spin-btn" onclick="spin()">SPIN</button>
+  </div>
+
+  <div class="history" id="history-box" style="display:none;">
+    <p class="history-title">Recent spins</p>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<script>
+  const SYMBOLS = ['🍒','🍋','🍊','⭐','💎','🔔'];
+  const PAYOUTS = {
+    '💎💎💎': 50,
+    '⭐⭐⭐': 20,
+    '🔔🔔🔔': 15,
+    '🍒🍒🍒': 10,
+    '🍊🍊🍊': 8,
+    '🍋🍋🍋': 6,
+    '__two': 2,
+    '__cherry': 1.5,
+  };
+
+  let balance = 100, spins = 0, net = 0, spinning = false;
+  const history = [];
+
+  const slider = document.getElementById('bet-slider');
+  const betDisplay = document.getElementById('bet-display');
+  slider.addEventListener('input', () => {
+    betDisplay.textContent = '$' + slider.value;
+  });
+
+  function getRandom() {
+    return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+  }
+
+  function calcPayout(s, bet) {
+    const key = s.join('');
+    if (PAYOUTS[key]) return Math.round(bet * PAYOUTS[key]);
+    if (s[0]===s[1] || s[1]===s[2] || s[0]===s[2]) return Math.round(bet * PAYOUTS['__two']);
+    if (s.includes('🍒')) return Math.round(bet * PAYOUTS['__cherry']);
+    return 0;
+  }
+
+  function animateReel(id, finalSymbol, delay) {
+    return new Promise(resolve => {
+      const el = document.getElementById(id);
+      let ticks = 0;
+      const total = 8 + delay * 3;
+      const iv = setInterval(() => {
+        el.textContent = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+        ticks++;
+        if (ticks >= total) {
+          clearInterval(iv);
+          el.textContent = finalSymbol;
+          resolve();
+        }
+      }, 80);
+    });
+  }
+
+  async function spin() {
+    if (spinning) return;
+    const bet = parseInt(slider.value);
+    if (balance < bet) {
+      setMsg('not enough balance', 'lose');
+      return;
+    }
+    spinning = true;
+    document.getElementById('spin-btn').disabled = true;
+
+    balance -= bet;
+    spins++;
+    updateStats(net);
+
+    const result = [getRandom(), getRandom(), getRandom()];
+
+    await Promise.all([
+      animateReel('s0', result[0], 0),
+      animateReel('s1', result[1], 1),
+      animateReel('s2', result[2], 2),
+    ]);
+
+    const payout = calcPayout(result, bet);
+    balance += payout;
+    net = balance - 100;
+    updateStats(net);
+
+    if (payout > 0) {
+      if (payout >= bet * 10) setMsg('JACKPOT! +$' + payout, 'win');
+      else if (payout > bet) setMsg('nice win! +$' + payout, 'win');
+      else setMsg('small win +$' + payout, 'win');
+    } else {
+      setMsg('no luck this time', 'lose');
+    }
+
+    addHistory(result, payout - bet);
+
+    if (balance <= 0) {
+      setMsg('game over — refresh to restart', 'lose');
+      document.getElementById('spin-btn').disabled = true;
+      spinning = false;
+      return;
+    }
+
+    spinning = false;
+    document.getElementById('spin-btn').disabled = false;
+  }
+
+  function setMsg(text, cls) {
+    const el = document.getElementById('msg');
+    el.textContent = text;
+    el.className = 'message ' + (cls || '');
+  }
+
+  function updateStats(n) {
+    document.getElementById('balance').textContent = 'Rp.' + Math.max(0, balance);
+    document.getElementById('spins').textContent = spins;
+    const netEl = document.getElementById('net');
+    netEl.textContent = (n >= 0 ? '+' : '') + '$' + n;
+    netEl.style.color = n >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)';
+  }
+
+  function addHistory(syms, delta) {
+    history.unshift({ syms, delta });
+    if (history.length > 5) history.pop();
+    const box = document.getElementById('history-box');
+    const list = document.getElementById('history-list');
+    box.style.display = 'block';
+    list.innerHTML = history.map(h =>
+      `<div class="history-item">
+        <span class="syms">${h.syms.join(' ')}</span>
+        <span class="${h.delta >= 0 ? 'result-pos' : 'result-neg'}">${h.delta >= 0 ? '+' : ''}$${h.delta}</span>
+      </div>`
+    ).join('');
+  }
+</script>
